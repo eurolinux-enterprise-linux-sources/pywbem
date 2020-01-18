@@ -1,0 +1,112 @@
+Index: pywbem-20130827/cim_obj.py
+===================================================================
+--- pywbem-20130827.orig/cim_obj.py
++++ pywbem-20130827/cim_obj.py
+@@ -391,7 +391,7 @@ class CIMProperty(object):
+             if value is not None:
+                 if value:
+                     if self.embedded_object is not None:
+-                        value = [v.tocimxml().toxml() for v in value]
++                        value = [v.tocimxml().toxml(encoding='utf-8') for v in value]
+                 value = VALUE_ARRAY([VALUE(atomic_to_cim_xml(v)) for v in value])
+ 
+             return PROPERTY_ARRAY(
+@@ -422,7 +422,7 @@ class CIMProperty(object):
+             value = self.value
+             if value is not None:
+                 if self.embedded_object is not None:
+-                    value = value.tocimxml().toxml()
++                    value = value.tocimxml().toxml(encoding='utf-8')
+                 else:
+                     value = atomic_to_cim_xml(value)
+                 value = VALUE(value)
+@@ -599,9 +599,9 @@ class CIMInstanceName(object):
+                     # long or float
+                     _type = 'numeric'
+                     value = str(kb[1])
+-                elif type(kb[1]) == str or type(kb[1]) == unicode:
++                elif isinstance(kb[1], basestring):
+                     _type = 'string'
+-                    value = kb[1]
++                    value = kb[1].decode('utf-8') if isinstance(kb[1], str) else kb[1]
+                 else:
+                     raise TypeError(
+                         'Invalid keybinding type for keybinding ' '%s: %s' % (kb[0],`type(kb[1])`))
+@@ -1341,7 +1341,8 @@ def tocimxml(value):
+ 
+     if isinstance(value, cim_types.CIMType) or \
+            type(value) in (str, unicode, int):
+-        return cim_xml.VALUE(unicode(value))
++        value = value.decode('utf-8') if isinstance(value, str) else unicode(value)
++        return cim_xml.VALUE(value)
+ 
+     if isinstance(value, bool):
+         if value:
+Index: pywbem-20130827/cim_operations.py
+===================================================================
+--- pywbem-20130827.orig/cim_operations.py
++++ pywbem-20130827/cim_operations.py
+@@ -165,8 +165,8 @@ class WBEMConnection(object):
+             '2.0', '2.0')
+ 
+         if self.debug:
+-            self.last_raw_request = req_xml.toxml()
+-            self.last_request = req_xml.toprettyxml(indent='  ')
++            self.last_raw_request = req_xml.toxml(encoding='utf-8')
++            self.last_request = req_xml.toprettyxml(indent='  ', encoding='utf-8')
+ 
+             self.last_reply = None
+             self.last_raw_reply = None
+@@ -174,7 +174,7 @@ class WBEMConnection(object):
+         # Get XML response
+ 
+         try:
+-            resp_xml = cim_http.wbem_request(self.url, req_xml.toxml(),
++            resp_xml = cim_http.wbem_request(self.url, req_xml.toxml(encoding='utf-8'),
+                                              self.creds, headers,
+                                              x509 = self.x509,
+                                              verify_callback = self.verify_callback,
+@@ -192,7 +192,7 @@ class WBEMConnection(object):
+         reply_dom = minidom.parseString(resp_xml)
+ 
+         if self.debug:
+-            self.last_reply = reply_dom.toprettyxml(indent='  ')
++            self.last_reply = reply_dom.toprettyxml(indent='  ', encoding='utf-8')
+             self.last_raw_reply = resp_xml
+ 
+         # Parse response
+@@ -292,7 +292,7 @@ class WBEMConnection(object):
+             if isinstance(obj, (CIMClassName, CIMInstanceName)):
+                 return cim_xml.VALUE_REFERENCE(obj.tocimxml())
+             if isinstance(obj, (CIMClass, CIMInstance)):
+-                return cim_xml.VALUE(obj.tocimxml().toxml())
++                return cim_xml.VALUE(obj.tocimxml().toxml(encoding='utf-8'))
+             if isinstance(obj, list):
+                 if obj and isinstance(obj[0], (CIMClassName, CIMInstanceName)):
+                     return cim_xml.VALUE_REFARRAY([paramvalue(x) for x in obj])
+@@ -328,12 +328,12 @@ class WBEMConnection(object):
+             '2.0', '2.0')
+ 
+         if self.debug:
+-            self.last_request = req_xml.toprettyxml(indent='  ')
++            self.last_request = req_xml.toprettyxml(indent='  ', encoding='utf-8')
+ 
+         # Get XML response
+ 
+         try:
+-            resp_xml = cim_http.wbem_request(self.url, req_xml.toxml(),
++            resp_xml = cim_http.wbem_request(self.url, req_xml.toxml(encoding='utf-8'),
+                                              self.creds, headers,
+                                              x509 = self.x509,
+                                              verify_callback = self.verify_callback,
+Index: pywbem-20130827/cim_types.py
+===================================================================
+--- pywbem-20130827.orig/cim_types.py
++++ pywbem-20130827/cim_types.py
+@@ -258,5 +258,5 @@ def atomic_to_cim_xml(obj):
+     elif cimtype(obj) == 'real64':
+         return u'%.16E' % obj
+     else:
+-        return unicode(obj)
++        return obj.decode('utf-8') if isinstance(obj, str) else unicode(obj)
+ 

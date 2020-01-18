@@ -1,0 +1,50 @@
+Index: pywbem-20131121/cim_http.py
+===================================================================
+--- pywbem-20131121.orig/cim_http.py
++++ pywbem-20131121/cim_http.py
+@@ -42,6 +42,33 @@ class AuthError(Error):
+     """This exception is raised when an authentication error (401) occurs."""
+     pass
+ 
++try:
++    import pwd
++    def get_user_name(uid=None):
++        """Return user name for given uid.
++        :param int uid: User id of user whose name is desired.
++            If not given, current user will be assumed.
++        """
++        try:
++            if uid is None:
++                uid = os.getuid()
++            return pwd.getpwuid(uid).pw_name
++        except KeyError:
++            pass
++except ImportError:     # pwd is available only on *nix
++    def get_user_name(uid=None):
++        """
++        Return user name of current user.
++        :param int uid: Optional argument. Note that uid may be equal only
++            to current user's id, otherwise an exception will be raised.
++        """
++        if uid is not None and uid != os.getuid():
++            raise ValueError("Can not get user name for other user.")
++        try:
++            return getpass.getuser()
++        except KeyError:
++            pass
++
+ def parse_url(url):
+     """Return a tuple of (host, port, ssl) from the URL parameter.
+     The returned port defaults to 5988 if not specified.  SSL supports
+@@ -226,10 +253,7 @@ def wbem_request(url, data, creds, heade
+         local = True
+     if local:
+         uid = os.getuid()
+-        try:
+-            locallogin = getpass.getuser()
+-        except KeyError:
+-            locallogin = None
++        locallogin = get_user_name(uid)
+     while numTries < tryLimit:
+         numTries = numTries + 1
+ 

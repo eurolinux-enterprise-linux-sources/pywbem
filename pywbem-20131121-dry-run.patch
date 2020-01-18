@@ -1,0 +1,44 @@
+commit 754e24718e00fb7e5ec10fb1c01bc9521ff4e7a0
+Author: jsafranek <jsafranek@84f79d66-d411-0410-a85a-a3183736c6e8>
+Date:   Thu Nov 21 13:46:57 2013 +0000
+
+    mof_compiler: Add '-d' option to dry-run the operation.
+    
+    It just checks the mof file syntax.
+    
+    The idea behind this patch is to easily detect included mof files from 'mof_compiler -v -d' output.
+    
+    git-svn-id: https://svn.code.sf.net/p/pywbem/code/pywbem/trunk@626 84f79d66-d411-0410-a85a-a3183736c6e8
+
+diff --git a/mof_compiler.py b/mof_compiler.py
+index d1dd333..84f33d4 100644
+--- a/mof_compiler.py
++++ b/mof_compiler.py
+@@ -1680,6 +1680,9 @@ if __name__ == '__main__':
+     oparser.add_option('-p', '--password', 
+             dest='password', metavar='Password',
+             help='Specify the password')
++    oparser.add_option('-d', '--dry-run',
++            dest='dry_run', default=False, action='store_true',
++            help="Don't actually modify the repository, just check mof file syntax. Connection to CIMOM is still required to check qualifiers.")
+ 
+     (options, args) = oparser.parse_args()
+     search = options.search
+@@ -1695,7 +1698,7 @@ if __name__ == '__main__':
+         conn = WBEMConnection(options.url, (options.username, passwd))
+     else:
+         conn = WBEMConnection(options.url)
+-    if options.remove:
++    if options.remove or options.dry_run:
+         conn = MOFWBEMConnection(conn=conn)
+     #conn.debug = True
+     conn.default_namespace = options.ns
+@@ -1728,7 +1731,5 @@ if __name__ == '__main__':
+     except CIMError, ce:
+         sys.exit(1)
+ 
+-    if options.remove:
++    if options.remove and not options.dry_run:
+         conn.rollback(verbose=options.verbose)
+-
+-

@@ -4,7 +4,7 @@
 
 Name:           pywbem 
 Version:        0.7.0
-Release:        16.%{revdate}svn%{svnrev}%{?dist}
+Release:        25.%{revdate}svn%{svnrev}%{?dist}
 Summary:        Python WBEM Client and Provider Interface
 Group:          Development/Libraries
 License:        LGPLv2
@@ -15,7 +15,9 @@ URL:            http://pywbem.sourceforge.net
 #  tar -cJvf pywbem-20130128.tar.xz pywbem-20130128
 Source0:        %{name}-%{revdate}.tar.xz
 BuildRequires:  python-setuptools-devel 
+BuildRequires:  m2crypto
 BuildArch:      noarch
+Requires:       m2crypto
 
 # fix module imports in /usr/bin/mofcomp
 Patch0:         pywbem-20130411-mof_compiler-import.patch
@@ -24,6 +26,13 @@ Patch1:         pywbem-remove-twisted.patch
 # Use system python, in case someone has enabled software collection
 # See bug #987039
 Patch2:         pywbem-20130723-shebang.patch
+# Add '-d' option to /usr/bin/mofcomp (SVN rev. 626)
+# See bug #1031085
+Patch3:         pywbem-20131121-dry-run.patch
+# See bug rhbz#1026891
+Patch4:         pywbem-20131121-ssl_verify_host.patch
+Patch5:         pywbem-20131121-utf_encoding.patch
+Patch6:         pywbem-20131121-local_root_auth.patch
 
 %description
 A Python library for making CIM (Common Information Model) operations over HTTP 
@@ -44,6 +53,10 @@ easiest way to write providers on the planet.
 %patch0 -p1 -b .mofcomp-imports
 %patch1 -p1
 %patch2 -p1 -b .shebang
+%patch3 -p1 -b .dry-run
+%patch4 -p1 -b .ssl_verifyhost
+%patch5 -p1 -b .utf_encoding
+%patch6 -p1 -b .local_root_auth
 
 %build
 # dirty workaround to fix the mof_compiler.py module path
@@ -69,6 +82,33 @@ rm -rf %{buildroot}
 %doc README
 
 %changelog
+* Mon Feb 24 2014 Michal Minar <miminar@redhat.com> 0.7.0-25.20130827svn625
+- Fixed local authentication under root.
+
+* Wed Jan 22 2014 Michal Minar <miminar@redhat.com> 0.7.0-24.20130827svn625
+- Added support for non-ascii strings.
+- Resolves: rhbz#1056620
+
+* Fri Jan 03 2014 Michal Minar <miminar@redhat.com> 0.7.0-23.20130827svn625
+- Skip hostname check when no verification is desired.
+
+* Mon Dec 30 2013 Michal Minar <miminar@redhat.com> 0.7.0-22.20130827svn625
+- Work around M2Crypto's inability to handle unicode strings.
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 0.7.0-21.20130827svn625
+- Mass rebuild 2013-12-27
+
+* Thu Dec 19 2013 Michal Minar <miminar@redhat.com> 0.7.0-20.20130827svn625
+- Adjusted default certificate paths used for verification.
+
+* Tue Dec 17 2013 Michal Minar <miminar@redhat.com> 0.7.0-19.20130827svn625
+- Fixes TOCTOU vulnerability in certificate validation.
+- Resolves: rhbz#1026891
+
+* Thu Nov 21 2013 Jan Safranek <jsafrane@redhat.com> 0.7.0-17.20130827svn625
+- Added '-d' option to /usr/bin/mofcomp to just check mof files and their
+  includes (#1031085).
+
 * Tue Aug 27 2013 Jan Safranek <jsafrane@redhat.com> 0.7.0-16.20130827svn625
 - Fixed parsing of ipv6 addresses.
 
