@@ -1,0 +1,22 @@
+diff -up pywbem-20130411/mof_compiler.py.bak pywbem-20130411/mof_compiler.py
+--- pywbem-20130411/mof_compiler.py.bak	2009-07-30 00:55:26.000000000 +0200
++++ pywbem-20130411/mof_compiler.py	2013-05-24 17:40:16.684813502 +0200
+@@ -20,12 +20,12 @@
+ 
+ import sys
+ import os
+-import lex
+-import yacc
+-from lex import TOKEN
+-from cim_operations import CIMError, WBEMConnection
+-from cim_obj import *
+-from cim_constants import *
++from pywbem import lex
++from pywbem import yacc
++from pywbem.lex import TOKEN
++from pywbem.cim_operations import CIMError, WBEMConnection
++from pywbem.cim_obj import *
++from pywbem.cim_constants import *
+ from getpass import getpass
+ 
+ _optimize = 1
